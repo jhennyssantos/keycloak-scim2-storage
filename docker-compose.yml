@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: keycloak-db
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - keycloak-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  keycloak:
+    build: .
+    container_name: keycloak
+    depends_on:
+      - postgres
+    ports:
+      - "443:8443"  # HTTPS padrão
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_FEATURES: preview
+      KC_HOSTNAME: jheni-keycloak.duckdns.org
+      KC_PROXY: edge
+      KC_SPI_SCIM_USER_ATTRIBUTE_MAPPINGS_0_SCIM_ATTRIBUTE: displayName
+      KC_SPI_SCIM_USER_ATTRIBUTE_MAPPINGS_0_KEYCLOAK_ATTRIBUTE: displayName
+      KC_SPI_SCIM_USER_ATTRIBUTE_MAPPINGS_0_READONLY: false
+      KC_SPI_THEME_WELCOME_THEME: scim
+      KC_HTTP_ENABLED: true
+      KC_HTTPS_CERTIFICATE_FILE: /certs/fullchain1.pem
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /certs/privkey1.pem
+      KC_SPI_REALM_RESTAPI_EXTENSION_SCIM_LICENSE_KEY: ""
+      DB_VENDOR: POSTGRES
+      DB_ADDR: postgres
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: secret
+    volumes:
+      - /etc/letsencrypt/archive/jheni-keycloak.duckdns.org:/certs:ro
+
+volumes:
+  keycloak-data:
